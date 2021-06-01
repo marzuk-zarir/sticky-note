@@ -3,12 +3,23 @@ import { createElement } from './helper';
 const taskInput = document.querySelector('#task-input');
 const taskContainer = document.querySelector('#task-container');
 const colorPalette = ['#e56b6f', '#ffe66d', '#06d6a0', '#8ecae6', '#ffb5a7'];
+const allTasks = JSON.parse(localStorage.getItem('_tasks_'));
+const allColors = JSON.parse(localStorage.getItem('_colors_'));
 
 window.addEventListener('DOMContentLoaded', () => {
+    // if any old tasks exist in local storage then add them to task container
+    if (allTasks && allColors) {
+        allTasks.forEach((task) => {
+            createTask(taskContainer, task);
+        });
+    }
+
     taskInput.addEventListener('keypress', (e) => {
         if (e.key === 'Enter') {
             if (e.target.value.trim()) {
-                createTask(e.target.value, taskContainer);
+                let newTask = saveTasks(e.target.value);
+                let newColor = saveColors();
+                createTask(taskContainer, newTask, newColor);
                 e.target.value = '';
             } else {
                 alert('Invalid Input Field');
@@ -19,9 +30,10 @@ window.addEventListener('DOMContentLoaded', () => {
 });
 
 // Create task with input value
-function createTask(inputValue, parent) {
+function createTask(parent, inputValue, color) {
     let column = createElement({ class: 'col-md-4' });
     let taskField = createElement({ class: 'task d-flex' });
+    taskField.style.background = color;
 
     // <p>{inputValue}</p>
     let taskText = createElement('p');
@@ -114,4 +126,30 @@ function createEditBtn(task) {
     });
 
     return editBtn;
+}
+
+// Save task in local storage
+function saveTasks(task) {
+    let tasks;
+    if (!localStorage.getItem('_tasks_')) {
+        tasks = [];
+    } else {
+        tasks = JSON.parse(localStorage.getItem('_tasks_'));
+    }
+    tasks.push(task);
+    localStorage.setItem('_tasks_', JSON.stringify(tasks));
+    return task;
+}
+
+// Save color in local storage
+function saveColors(color = '#e4c1f9') {
+    let colors;
+    if (!localStorage.getItem('_colors_')) {
+        colors = [];
+    } else {
+        colors = JSON.parse(localStorage.getItem('_colors_'));
+    }
+    colors.push(color);
+    localStorage.setItem('_colors_', JSON.stringify(colors));
+    return color;
 }

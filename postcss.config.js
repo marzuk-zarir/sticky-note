@@ -3,9 +3,9 @@ const autoPrefixer = require('autoprefixer');
 
 module.exports = {
     plugins: [
-        purgecss({
-            content: ['./**/*.html'],
-        }),
+        // purgecss({
+        //     content: ['./**/*.html'],
+        // }),
         autoPrefixer,
     ],
 };

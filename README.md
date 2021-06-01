@@ -1,4 +1,4 @@
-# Bootstrap 5.0 Starter Template
+# Sticky Note
 
 ## Technology:
 
