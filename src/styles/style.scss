@@ -1,0 +1,56 @@
+@import '~bootstrap/scss/bootstrap';
+@import '~@fortawesome/fontawesome-free/css/all.css';
+@import './variables';
+@import './theme';
+@import './mixin';
+
+#task-container {
+    color: $gray-900;
+    line-height: 1.3;
+
+    .task {
+        position: relative;
+        background: #e4c1f9;
+        min-height: 80px;
+        font-family: $task-font;
+        font-size: 1.1rem;
+        border-radius: 5px;
+        padding: 0.3rem 0.6rem;
+
+        .edit-text {
+            position: absolute;
+            top: 0;
+            left: 0;
+            resize: none;
+            z-index: 1;
+        }
+    }
+
+    i {
+        font-size: 1.5rem;
+        color: #fff;
+        cursor: pointer;
+    }
+}
+
+.control-panel {
+    display: flex;
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    background: rgba($color: #000000, $alpha: 0.45);
+    width: 100%;
+    padding: 0.3rem;
+
+    .color-palette {
+        display: flex;
+
+        div {
+            width: $color-palette-size;
+            height: $color-palette-size;
+            border-radius: 50%;
+            margin: 0 0.1rem;
+            cursor: pointer;
+        }
+    }
+}
