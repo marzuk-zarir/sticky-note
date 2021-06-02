@@ -1,25 +1,29 @@
 import { createElement } from './helper';
+import {
+    getTaskFromLocalStorage,
+    addTaskInLocalStorage,
+    updateColor,
+    removeTaskFromLocalStorage,
+    updateTaskInLocalStorage,
+} from './storage';
 
 const taskInput = document.querySelector('#task-input');
 const taskContainer = document.querySelector('#task-container');
 const colorPalette = ['#e56b6f', '#ffe66d', '#06d6a0', '#8ecae6', '#ffb5a7'];
-const allTasks = JSON.parse(localStorage.getItem('_tasks_'));
-const allColors = JSON.parse(localStorage.getItem('_colors_'));
+let taskID = 1;
 
 window.addEventListener('DOMContentLoaded', () => {
-    // if any old tasks exist in local storage then add them to task container
-    if (allTasks && allColors) {
-        allTasks.forEach((task) => {
-            createTask(taskContainer, task);
-        });
-    }
+    // Render all tasks on loaded
+    const tasks = getTaskFromLocalStorage();
+    tasks.forEach((task) => {
+        createTask(task.task, task.color, taskContainer);
+    });
 
     taskInput.addEventListener('keypress', (e) => {
         if (e.key === 'Enter') {
             if (e.target.value.trim()) {
-                let newTask = saveTasks(e.target.value);
-                let newColor = saveColors();
-                createTask(taskContainer, newTask, newColor);
+                addTaskInLocalStorage(e.target.value);
+                createTask(e.target.value, '#e4c1f9', taskContainer);
                 e.target.value = '';
             } else {
                 alert('Invalid Input Field');
@@ -30,14 +34,19 @@ window.addEventListener('DOMContentLoaded', () => {
 });
 
 // Create task with input value
-function createTask(parent, inputValue, color) {
+function createTask(inputValue, color, parent) {
     let column = createElement({ class: 'col-md-4' });
     let taskField = createElement({ class: 'task d-flex' });
     taskField.style.background = color;
 
+    // <span class="task-number" >{taskID}</span>
+    let taskNumber = createElement('span', { class: 'task-number' });
+    taskNumber.innerHTML = taskID++;
+    taskField.appendChild(taskNumber);
+
     // <p>{inputValue}</p>
     let taskText = createElement('p');
-    taskText.innerHTML = inputValue;
+    taskText.innerHTML = inputValue.trim();
     taskField.appendChild(taskText);
 
     // <i class="far fa-times-circle ms-auto" ></i>
@@ -45,6 +54,7 @@ function createTask(parent, inputValue, color) {
         class: 'far fa-times-circle ms-auto',
     });
     taskDelete.addEventListener('click', () => {
+        removeTaskFromLocalStorage(taskNumber.innerText);
         parent.removeChild(column);
     });
     taskField.appendChild(taskDelete);
@@ -90,6 +100,7 @@ function createColorPalette(task) {
         let colorCircle = document.createElement('div');
         colorCircle.style.background = color;
         colorCircle.addEventListener('click', () => {
+            updateColor(task, color);
             task.style.background = color;
         });
         colorContainer.appendChild(colorCircle);
@@ -114,6 +125,7 @@ function createEditBtn(task) {
             if (e.key === 'Enter') {
                 if (e.target.value.trim()) {
                     oldText.innerHTML = e.target.value;
+                    updateTaskInLocalStorage(task);
                     task.removeChild(e.target);
                 } else {
                     alert('Invalid edit field');
@@ -126,30 +138,4 @@ function createEditBtn(task) {
     });
 
     return editBtn;
-}
-
-// Save task in local storage
-function saveTasks(task) {
-    let tasks;
-    if (!localStorage.getItem('_tasks_')) {
-        tasks = [];
-    } else {
-        tasks = JSON.parse(localStorage.getItem('_tasks_'));
-    }
-    tasks.push(task);
-    localStorage.setItem('_tasks_', JSON.stringify(tasks));
-    return task;
-}
-
-// Save color in local storage
-function saveColors(color = '#e4c1f9') {
-    let colors;
-    if (!localStorage.getItem('_colors_')) {
-        colors = [];
-    } else {
-        colors = JSON.parse(localStorage.getItem('_colors_'));
-    }
-    colors.push(color);
-    localStorage.setItem('_colors_', JSON.stringify(colors));
-    return color;
 }
