@@ -4,10 +4,10 @@
     "description": "Bootstrap 5 Template for Quickly Starting Project",
     "main": "main.js",
     "scripts": {
-        "start": "webpack serve --mode development",
-        "start:open": "webpack serve --open google-chrome --mode development",
+        "start": "webpack serve --mode development --open",
         "build": "webpack build --mode development",
         "build:prod": "webpack build --mode production",
+        "database": "json-server server/database.json",
         "clean": "rm -rf ./dist"
     },
     "keywords": [],

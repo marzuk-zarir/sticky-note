@@ -12,7 +12,7 @@ if (process.env.NODE_ENV !== 'production') {
 
 const webpackConfig = {
     // Entry
-    entry: ['@babel/polyfill', './src/scripts/main.js'],
+    entry: ['@babel/polyfill', './src/scripts/index.js'],
 
     // Output
     output: {

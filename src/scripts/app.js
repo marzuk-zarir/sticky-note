@@ -1,30 +1,42 @@
 import { createElement } from './helper';
-import {
-    getTaskFromLocalStorage,
-    addTaskInLocalStorage,
-    updateColor,
-    removeTaskFromLocalStorage,
-    updateTaskInLocalStorage,
-} from './storage';
 
+const BASE_URL = 'http://localhost:3000/todos';
 const taskInput = document.querySelector('#task-input');
 const taskContainer = document.querySelector('#task-container');
 const colorPalette = ['#e56b6f', '#ffe66d', '#06d6a0', '#8ecae6', '#ffb5a7'];
-let taskID = 1;
-
 window.addEventListener('DOMContentLoaded', () => {
-    // Render all tasks on loaded
-    const tasks = getTaskFromLocalStorage();
-    tasks.forEach((task) => {
-        createTask(task.task, task.color, taskContainer);
-    });
+    // GET todo
+    fetch(BASE_URL)
+        .then((res) => res.json())
+        .then((todos) => {
+            todos.forEach((todo) => {
+                createTask(todo, taskContainer);
+            });
+        })
+        .catch((e) => console.log(e.message));
 
-    taskInput.addEventListener('keypress', (e) => {
+    // POST todo
+    taskInput.addEventListener('keypress', async (e) => {
         if (e.key === 'Enter') {
             if (e.target.value.trim()) {
-                addTaskInLocalStorage(e.target.value);
-                createTask(e.target.value, '#e4c1f9', taskContainer);
-                e.target.value = '';
+                let newTodo = {
+                    todo: e.target.value.trim(),
+                    color: '#e4c1f9',
+                };
+                try {
+                    const res = await fetch(BASE_URL, {
+                        method: 'POST',
+                        headers: {
+                            'Content-type': 'application/json; charset=UTF-8',
+                        },
+                        body: JSON.stringify(newTodo),
+                    });
+                    const todo = await res.json();
+                    createTask(todo, taskContainer);
+                    e.target.value = '';
+                } catch (e) {
+                    console.log(e.message);
+                }
             } else {
                 alert('Invalid Input Field');
                 e.target.value = '';
@@ -34,19 +46,14 @@ window.addEventListener('DOMContentLoaded', () => {
 });
 
 // Create task with input value
-function createTask(inputValue, color, parent) {
+function createTask(todo, parent) {
     let column = createElement({ class: 'col-md-4' });
     let taskField = createElement({ class: 'task d-flex' });
-    taskField.style.background = color;
-
-    // <span class="task-number" >{taskID}</span>
-    let taskNumber = createElement('span', { class: 'task-number' });
-    taskNumber.innerHTML = taskID++;
-    taskField.appendChild(taskNumber);
+    taskField.style.background = todo.color;
 
     // <p>{inputValue}</p>
     let taskText = createElement('p');
-    taskText.innerHTML = inputValue.trim();
+    taskText.innerHTML = todo.todo;
     taskField.appendChild(taskText);
 
     // <i class="far fa-times-circle ms-auto" ></i>
@@ -54,12 +61,12 @@ function createTask(inputValue, color, parent) {
         class: 'far fa-times-circle ms-auto',
     });
     taskDelete.addEventListener('click', () => {
-        removeTaskFromLocalStorage(taskNumber.innerText);
+        fetch(`${BASE_URL}/${todo.id}`, { method: 'DELETE' });
         parent.removeChild(column);
     });
     taskField.appendChild(taskDelete);
 
-    let controlPanel = createTaskController(taskField);
+    let controlPanel = createTaskController(taskField, todo.id);
     controlPanel.style.display = 'none';
     taskField.appendChild(controlPanel);
 
@@ -78,31 +85,37 @@ function createTask(inputValue, color, parent) {
 }
 
 // Create task controller for edit and change background-color of each task
-function createTaskController(parent) {
+function createTaskController(parent, id) {
     let controller = createElement({ class: 'control-panel' });
 
     // Create palette
-    let colorPalette = createColorPalette(parent);
+    let colorPalette = createColorPalette(parent, id);
     controller.appendChild(colorPalette);
 
     // Edit button
-    let editBtn = createEditBtn(parent);
+    let editBtn = createEditBtn(parent, id);
     controller.appendChild(editBtn);
 
     return controller;
 }
 
 // Create color palette with some color circle
-function createColorPalette(task) {
+function createColorPalette(task, id) {
     let colorContainer = createElement({ class: 'color-palette' });
 
     colorPalette.forEach((color) => {
         let colorCircle = document.createElement('div');
         colorCircle.style.background = color;
-        colorCircle.addEventListener('click', () => {
-            updateColor(task, color);
-            task.style.background = color;
+
+        colorCircle.addEventListener('click', async () => {
+            let newTodo = await updateTodo(
+                task.querySelector('p').innerText,
+                color,
+                id
+            );
+            task.style.background = newTodo.color;
         });
+
         colorContainer.appendChild(colorCircle);
     });
 
@@ -110,7 +123,7 @@ function createColorPalette(task) {
 }
 
 // Create edit button for each task
-function createEditBtn(task) {
+function createEditBtn(task, id) {
     let editBtn = createElement('i', { class: 'far fa-edit ms-auto' });
 
     editBtn.addEventListener('click', () => {
@@ -121,11 +134,15 @@ function createEditBtn(task) {
         textArea.style.height = task.offsetHeight + 'px';
         textArea.innerHTML = oldText.innerHTML;
 
-        textArea.addEventListener('keypress', (e) => {
+        textArea.addEventListener('keypress', async (e) => {
             if (e.key === 'Enter') {
                 if (e.target.value.trim()) {
-                    oldText.innerHTML = e.target.value;
-                    updateTaskInLocalStorage(task);
+                    const newTodo = await updateTodo(
+                        e.target.value.trim(),
+                        task.style.background,
+                        id
+                    );
+                    oldText.innerHTML = newTodo.todo;
                     task.removeChild(e.target);
                 } else {
                     alert('Invalid edit field');
@@ -138,4 +155,22 @@ function createEditBtn(task) {
     });
 
     return editBtn;
+}
+
+// UPDATE todo
+async function updateTodo(todo, color, elId) {
+    try {
+        const res = await fetch(`${BASE_URL}/${elId}`, {
+            method: 'PUT',
+            headers: {
+                'Content-type': 'application/json; charset=UTF-8',
+            },
+            body: JSON.stringify({ todo, color }),
+        });
+        const updatedTodo = await res.json();
+        return updatedTodo;
+    } catch (e) {
+        console.log(e.message);
+        return false;
+    }
 }
